@@ -3,21 +3,51 @@
 import { parseDocument } from '@/lib/parser';
 import { analyzeResume } from '@/lib/llm';
 
+const ALLOWED_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+const ALLOWED_EXTENSIONS = new Set(['pdf', 'doc', 'docx']);
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_JD_LENGTH = 10_000; // 10k chars
+
 export async function processResumeAction(formData: FormData) {
   try {
+    // Guard: ensure API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('[Action] GEMINI_API_KEY is not set');
+      return { success: false, error: 'Server configuration error. Please contact support.' };
+    }
+
     const file = formData.get('resume') as File | null;
-    const jobDescription = formData.get('jobDescription') as string | null || '';
+    const rawJd = formData.get('jobDescription') as string | null || '';
+    // Truncate job description to prevent abuse
+    const jobDescription = rawJd.slice(0, MAX_JD_LENGTH);
 
     if (!file || file.size === 0) {
       return { success: false, error: "No file was uploaded. Please attach a resume." };
     }
 
-    console.log(`[Action] Processing file: ${file.name}, type: "${file.type}", size: ${file.size}`);
-
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
       return { success: false, error: "File size exceeds 5MB limit." };
     }
+
+    // Validate MIME type
+    if (file.type && !ALLOWED_TYPES.has(file.type)) {
+      return { success: false, error: `Unsupported file type: "${file.type}". Please upload a PDF or DOCX.` };
+    }
+
+    // Validate file extension
+    const ext = file.name.toLowerCase().split('.').pop() || '';
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return { success: false, error: `Unsupported file extension: ".${ext}". Please upload a PDF, DOC, or DOCX.` };
+    }
+
+    // Sanitize filename (strip path separators to prevent traversal)
+    const safeName = file.name.replace(/[\\/]/g, '_');
+    console.log(`[Action] Processing file: ${safeName}, type: "${file.type}", size: ${file.size}`);
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);

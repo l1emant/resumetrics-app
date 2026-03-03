@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — NEVER commit secrets
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,5 +41,23 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# antigravity
+# database files — contain user data
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# uploaded / test resumes — contain personal information
+test-pdf-resume/
+uploads/
+*.resume.pdf
+*.resume.docx
+
+# planning / context docs
 antigravity_context.md
+Planning-draft.md
+
+# OS generated
+Thumbs.db
+ehthumbs.db
+Desktop.ini

@@ -1,6 +1,10 @@
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('[LLM] WARNING: GEMINI_API_KEY is not set. AI analysis will fail.');
+}
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY ?? '' });
 
 export interface AnalysisResult {
   score: number;

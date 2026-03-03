@@ -18,9 +18,9 @@ export default function Page() {
       />
       {/* Soft emerald ambient */}
       <div
-        className="fixed inset-0 z-0 pointer-events-none"
+        className="fixed inset-0 z-0 pointer-events-none animate-pulse-glow"
         style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(16,185,129,0.04) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 60% 50% at 50% 45%, rgba(16,185,129,0.06) 0%, transparent 70%)',
         }}
       />
 
