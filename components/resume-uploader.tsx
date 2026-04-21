@@ -5,11 +5,10 @@ import {
   Loader2,
   FileText,
   X,
-  Sparkles,
-  AlertCircle,
   Briefcase,
   FileUp,
 } from "lucide-react";
+import { toast } from "sonner";
 import { processResumeAction } from "@/app/actions";
 import { AnalysisResult } from "@/lib/llm";
 import type { AnalysisStep } from "./main-workspace";
@@ -27,7 +26,6 @@ const STEPS: Record<string, { text: string }> = {
 };
 
 export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
-  const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const [jd, setJd] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,11 +48,12 @@ export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
     const formData = new FormData(e.currentTarget);
     const file = formData.get("resume") as File;
     if (!file || file.size === 0) {
-      setError("Attach a resume first.");
+      toast.error("No resume attached", {
+        description: "Please upload a PDF, DOC, or DOCX file first.",
+      });
       return;
     }
 
@@ -64,24 +63,51 @@ export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
       setStep("parsing");
       await new Promise((r) => setTimeout(r, 300));
       setStep("analyzing");
+
       const response = await processResumeAction(formData);
+
       if (response.success && response.data) {
         setStep("done");
         onAnalysisComplete(response.data);
+
+        // Show a subtle info toast if fallback was used
+        if (response.usedFallback) {
+          toast.info("Switched to backup AI", {
+            description:
+              "Gemini was rate-limited, so we used Groq to analyze your resume. Results may vary slightly.",
+            duration: 6000,
+          });
+        }
       } else {
         setStep("error");
-        setError(response.error || "Analysis failed.");
+
+        // Differentiated error toasts
+        if ('errorType' in response && response.errorType === "rate_limit") {
+          toast.error("Rate limit exceeded", {
+            description:
+              response.error ||
+              "The AI service is temporarily overloaded. Please wait a minute and try again.",
+            duration: 8000,
+          });
+        } else {
+          toast.error("Analysis failed", {
+            description: response.error || "Something went wrong. Please try again.",
+            duration: 6000,
+          });
+        }
       }
     } catch {
       setStep("error");
-      setError("Something went wrong.");
+      toast.error("Connection error", {
+        description: "Could not reach the server. Check your internet connection and try again.",
+        duration: 6000,
+      });
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     setFileName(file ? file.name : "");
-    setError("");
     setStep("idle");
   };
 
@@ -102,29 +128,29 @@ export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isProcessing}
-          className="group w-full flex flex-col items-center justify-center gap-2.5 py-9 rounded-xl border border-zinc-700/30 bg-[#141414] hover:border-emerald-500/30 hover:bg-[#171717] transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          className="group w-full flex flex-col items-center justify-center gap-2.5 py-9 rounded-xl border border-border bg-[var(--surface-elevated)] hover:border-primary/30 hover:bg-accent/50 transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <div className="w-10 h-10 rounded-full bg-zinc-800/50 group-hover:bg-emerald-900/20 flex items-center justify-center transition-colors duration-300 animate-float">
-            <FileUp className="w-4.5 h-4.5 text-zinc-500 group-hover:text-emerald-400 transition-colors duration-300" />
+          <div className="w-10 h-10 rounded-full bg-muted group-hover:bg-primary/10 flex items-center justify-center transition-colors duration-300 animate-float">
+            <FileUp className="w-4.5 h-4.5 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
           </div>
           <div className="text-center">
-            <p className="text-[13px] text-zinc-400 group-hover:text-zinc-300 transition-colors">
+            <p className="text-[13px] text-muted-foreground group-hover:text-foreground/80 transition-colors">
               Click to upload resume
             </p>
-            <p className="text-[11px] text-zinc-600 mt-0.5">PDF, DOC, DOCX</p>
+            <p className="text-[11px] text-muted-foreground/60 mt-0.5">PDF, DOC, DOCX</p>
           </div>
         </button>
       ) : (
-        <div className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-emerald-800/25 bg-emerald-950/8">
+        <div className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-primary/20 bg-primary/5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-emerald-900/20 flex items-center justify-center">
-              <FileText className="w-4 h-4 text-emerald-400" />
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+              <FileText className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <p className="text-[13px] text-zinc-200 max-w-52 truncate">
+              <p className="text-[13px] text-foreground max-w-52 truncate">
                 {fileName}
               </p>
-              <p className="text-[11px] text-emerald-500/60">
+              <p className="text-[11px] text-primary/60">
                 Ready for analysis
               </p>
             </div>
@@ -136,7 +162,7 @@ export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
                 setFileName("");
                 if (fileInputRef.current) fileInputRef.current.value = "";
               }}
-              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-zinc-800/40 text-zinc-600 hover:text-zinc-300 transition-all cursor-pointer"
+              className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -145,13 +171,13 @@ export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
       )}
 
       {/* Job Description */}
-      <div className="relative rounded-xl border border-zinc-700/30 bg-[#141414] focus-within:border-zinc-600/40 transition-colors overflow-hidden">
+      <div className="relative rounded-xl border border-border bg-[var(--surface-elevated)] focus-within:border-muted-foreground/30 transition-colors overflow-hidden">
         <div className="flex items-center gap-2 px-3.5 pt-2.5 pb-0">
-          <Briefcase className="w-3 h-3 text-zinc-600" />
-          <span className="text-[10px] text-zinc-600 uppercase tracking-wider">
+          <Briefcase className="w-3 h-3 text-muted-foreground/60" />
+          <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">
             Job Description
           </span>
-          <span className="text-[10px] text-zinc-700 ml-auto">optional</span>
+          <span className="text-[10px] text-muted-foreground/40 ml-auto">optional</span>
         </div>
         <textarea
           ref={textareaRef}
@@ -160,21 +186,21 @@ export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
           onChange={(e) => setJd(e.target.value)}
           disabled={isProcessing}
           placeholder="Paste the job description you're targeting..."
-          className="w-full bg-transparent px-3.5 pb-3 pt-2 text-[13px] text-zinc-300 placeholder:text-zinc-700 outline-none resize-none disabled:opacity-40 leading-relaxed"
+          className="w-full bg-transparent px-3.5 pb-3 pt-2 text-[13px] text-foreground placeholder:text-muted-foreground/40 outline-none resize-none disabled:opacity-40 leading-relaxed"
           style={{
             minHeight: "72px",
             maxHeight: "240px",
             scrollbarWidth: "thin",
-            scrollbarColor: "#2a2a2a transparent",
+            scrollbarColor: "var(--border) transparent",
           }}
         />
       </div>
 
       {/* Submit / Status */}
       {isProcessing ? (
-        <div className="flex items-center justify-center gap-2.5 py-3 rounded-xl bg-emerald-950/15 border border-emerald-800/15">
-          <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
-          <span className="text-xs text-emerald-400/80">
+        <div className="flex items-center justify-center gap-2.5 py-3 rounded-xl bg-primary/5 border border-primary/10">
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          <span className="text-xs text-primary/80">
             {STEPS[step]?.text}
           </span>
         </div>
@@ -184,21 +210,12 @@ export function ResumeUploader({ onAnalysisComplete, step, setStep }: Props) {
           disabled={!fileName}
           className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
             !fileName
-              ? "bg-[#141414] border border-zinc-700/30 text-zinc-600 cursor-not-allowed"
+              ? "bg-[var(--surface-elevated)] border border-border text-muted-foreground cursor-not-allowed"
               : "bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer active:scale-[0.98] shadow-lg shadow-emerald-900/25 animate-shimmer"
           }`}
         >
-          {/* <Sparkles className="w-4 h-4" /> */}
           Analyze Resume
         </button>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-950/15 border border-red-900/15 text-xs text-red-400/90">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          {error}
-        </div>
       )}
     </form>
   );

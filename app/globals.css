@@ -80,6 +80,17 @@
   --sidebar-accent-foreground: oklch(0.21 0.034 264.665);
   --sidebar-border: oklch(0.928 0.006 264.531);
   --sidebar-ring: oklch(0.707 0.022 261.325);
+
+  /* ── Page surface tokens (light) ── */
+  --page-bg: #f8fafb;
+  --page-dot-a: rgba(0, 0, 0, 0.06);
+  --page-dot-b: rgba(0, 0, 0, 0.04);
+  --page-glow: rgba(16, 185, 129, 0.05);
+  --surface-elevated: rgba(255, 255, 255, 0.85);
+  --surface-card: rgba(255, 255, 255, 0.7);
+  --surface-card-border: rgba(0, 0, 0, 0.06);
+  --score-track: #e4e7ec;
+  --shimmer-color: rgba(0, 0, 0, 0.04);
 }
 
 .dark {
@@ -114,6 +125,17 @@
   --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+
+  /* ── Page surface tokens (dark) ── */
+  --page-bg: #060606;
+  --page-dot-a: #1a1a1a;
+  --page-dot-b: #111111;
+  --page-glow: rgba(16, 185, 129, 0.06);
+  --surface-elevated: rgba(20, 20, 20, 1);
+  --surface-card: rgba(24, 24, 27, 0.4);
+  --surface-card-border: rgba(63, 63, 70, 0.4);
+  --score-track: #1c1c1c;
+  --shimmer-color: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
@@ -195,7 +217,7 @@
   background-image: linear-gradient(
     110deg,
     transparent 25%,
-    rgba(255, 255, 255, 0.08) 37%,
+    var(--shimmer-color) 37%,
     transparent 50%
   );
   background-size: 200% 100%;
@@ -204,4 +226,79 @@
 
 .animate-pulse-glow {
   animation: pulseGlow 5s ease-in-out infinite;
+}
+
+/* ── Print-hidden utility ── */
+.print-hidden {
+  /* visible on screen by default */
+}
+
+/* ── Print Styles for PDF Export ── */
+@media print {
+  /* Hide background patterns, glow, and navigation */
+  body {
+    background: white !important;
+    color: #1a1a1a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide non-printable elements */
+  .print-hidden,
+  .animate-pulse-glow,
+  .fixed {
+    display: none !important;
+  }
+
+  /* Results container */
+  #results-dashboard {
+    padding: 0 !important;
+    max-width: 100% !important;
+    animation: none !important;
+  }
+
+  /* Section cards — clean borders for print */
+  #results-dashboard > div {
+    border-color: #e5e5e5 !important;
+    background: #fafafa !important;
+    break-inside: avoid;
+  }
+
+  /* Text color overrides for readability */
+  #results-dashboard * {
+    color: #1a1a1a !important;
+  }
+  #results-dashboard .text-emerald-600,
+  #results-dashboard .text-emerald-500,
+  #results-dashboard .text-emerald-400,
+  #results-dashboard .text-emerald-300\/80 {
+    color: #059669 !important;
+  }
+  #results-dashboard .text-yellow-600,
+  #results-dashboard .text-yellow-500 {
+    color: #ca8a04 !important;
+  }
+  #results-dashboard .text-red-400 {
+    color: #dc2626 !important;
+  }
+  #results-dashboard .text-blue-400 {
+    color: #2563eb !important;
+  }
+
+  /* Score ring — preserve SVG colors */
+  #results-dashboard svg circle {
+    stroke-opacity: 1 !important;
+  }
+
+  /* Keyword chips */
+  #results-dashboard .rounded-full {
+    border-color: #e5e5e5 !important;
+    background: #f5f5f5 !important;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
 }
