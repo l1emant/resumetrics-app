@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resumetrics
 
-## Getting Started
+Resumetrics is an AI-powered resume analyzer built with Next.js. It evaluates your resume against a job description and provides an ATS compatibility score, strengths, improvements, and rewrite suggestions using advanced LLMs (Gemini & Groq).
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **AI Resume Analysis**: Get detailed feedback, scores, and missing keywords based on a job description.
+- **Multi-Format Support**: Parses PDFs, images, and DOCX files.
+- **LLM Fallback**: Uses Google Gemini by default with seamless fallback to Groq for reliability and rate-limit handling.
+- **Local Database**: Built-in SQLite database to save and track your resume analysis history automatically.
+- **Modern UI**: Clean and responsive design using Tailwind CSS and shadcn/ui.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js 18.x or later
+- API Keys for Google Gemini and/or Groq.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup and Installation
 
-## Learn More
+1. **Clone the repository** (if you haven't already):
+   ```bash
+   git clone <repository-url>
+   cd resumetrics-app
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Install dependencies**:
+   This project uses `pnpm`, but you can also use `npm`.
+   ```bash
+   pnpm install
+   # or
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Configure Environment Variables**:
+   Copy the example environment file to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Open `.env.local` and add your API keys:
+   ```env
+   # Required: Google Gemini API Key (https://aistudio.google.com/apikey)
+   GEMINI_API_KEY=your_gemini_api_key_here
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   # Optional but recommended: Groq API Key for fallback (https://console.groq.com/keys)
+   GROQ_API_KEY=your_groq_api_key_here
+   ```
+   *Note: The application requires at least one of these API keys to function. Using both is recommended to enable the fallback mechanism.*
 
-## Deploy on Vercel
+4. **Run the Development Server**:
+   ```bash
+   npm run dev
+   # or
+   pnpm dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+5. **Access the Application**:
+   Open [http://localhost:3000](http://localhost:3000) in your browser. The SQLite database (`resumetrics.db`) will be automatically created and initialized on the first run.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Tech Stack
+
+- **Framework**: Next.js (App Router)
+- **Styling**: Tailwind CSS, shadcn/ui
+- **AI/LLM**: Google Gemini, Groq
+- **Database**: SQLite (`better-sqlite3`)
+- **Document Parsing**: `unpdf`, `mammoth`, `tesseract.js`
